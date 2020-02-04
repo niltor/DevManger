@@ -9,8 +9,8 @@ namespace Core.Entity
     /// </summary>
     public class BaseDB
     {
-        public Guid Id { get; set; }
-        public DateTime CreatedTime { get; set; }
-        public DateTime UpdatedTime { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public DateTime CreatedTime { get; set; } = DateTime.Now;
+        public DateTime UpdatedTime { get; set; } = DateTime.Now;
     }
 }
