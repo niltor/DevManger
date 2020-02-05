@@ -1,10 +1,13 @@
 using Core;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Net.Http;
 using WebApp.Services;
 
 namespace WebApp
@@ -29,6 +32,20 @@ namespace WebApp
             {
                 options.UseSqlServer(connectionString, b => b.MigrationsAssembly("WebApp"));
             });
+            // 使用cookie验证
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie();
+
+            services.AddHttpContextAccessor();
+            services.AddScoped<HttpContextAccessor>();
+            services.AddHttpClient();
+            services.AddScoped<HttpClient>();
+
+            services.AddAuthorization(config =>
+            {
+                config.AddPolicy("User", policy => policy.RequireRole("User"));
+                config.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+            });
             services.AddScoped<UserService>();
         }
 
@@ -51,8 +68,13 @@ namespace WebApp
 
             app.UseRouting();
 
+            app.UseCookiePolicy();
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapControllerRoute("Default", "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });

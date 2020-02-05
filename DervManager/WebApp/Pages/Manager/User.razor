@@ -1,23 +1,92 @@
 ﻿@layout Layout
 @page "/manager/user"
+@inject UserService service
 
-<div class="row">
+<div class="container">
     @* 添加用户 *@
-    <div class="col-md-12">
-        <form class="form-inline">
-            <input type="text"/>
-
-        </form>
+    <div class="col-md-12 mt-2">
+        <EditForm EditContext="_formContext" OnValidSubmit="HandleValidSubmit" class="form-inline">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <label class="">用户名</label>
+                <InputText @bind-Value="_userForm.Username" class="form-control"></InputText>
+            </div>
+            <div class="form-group">
+                <label class="">密码</label>
+                <InputText @bind-Value="_userForm.Password" class="form-control"></InputText>
+            </div>
+            <div class="form-group">
+                <label class="">姓名</label>
+                <InputText @bind-Value="_userForm.Realname" class="form-control"></InputText>
+            </div>
+            <button type="submit" class="form-control btn btn-primary">添加</button>
+        </EditForm>
     </div>
     @* 列表 *@
-    <div class="col-md-12">
-
+    <div class="col-md-12 mt-2">
+        @if (users == null)
+        {
+            <p>loading....</p>
+        }
+        else
+        {
+            <table class="table table-sm table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <td>用户名</td>
+                        <td>姓名</td>
+                        <td>角色</td>
+                        @*<td>职位</td>*@
+                        <td>操作</td>
+                    </tr>
+                </thead>
+                <tbody >
+                    @foreach (var user in users)
+                    {
+                        <tr>
+                            <td>@user.Username</td>
+                            <td>@user.Realname</td>
+                            <td>@user.Role</td>
+                            @*<td>@user.Position</td>*@
+                            <td>
+                                <button class="btn btn-sm btn-danger" @onclick="@(_=>DeleteUser(user))">删除</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
     </div>
 </div>
 
 @code {
-    public UserForm UserForm { get; set; }
+    private UserForm _userForm = new UserForm();
+    private List<Core.Entity.User> users = new List<Core.Entity.User>();
+    private EditContext _formContext;
 
+    protected override async Task OnInitializedAsync()
+    {
+        _formContext = new EditContext(_userForm);
+        users = await service.GetUsersAsync();
+    }
 
+    private async Task HandleValidSubmit()
+    {
+        if (_formContext.Validate())
+        {
+            var user = await service.AddUserAsync(_userForm);
+            users.Add(user);
+        }
+        else
+        {
 
+        }
+    }
+
+    private async Task DeleteUser(Core.Entity.User user)
+    {
+        await service.DeleteUserAsync(user.Id);
+        users.Remove(user);
+    }
 }
